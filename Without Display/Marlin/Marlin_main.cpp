@@ -30,7 +30,7 @@
 #include "Marlin.h"
 
 //Fab-X 2.0
-#include <LED.h>
+//#include <LED.h>
 #include "OneButton.h"
 #include "SoftReset.h"
 #define LED_PIN 4
@@ -419,12 +419,36 @@ boolean chdkActive = false;
 void get_arc_coordinates();
 bool setTargetedHotend(int code);
 
+/*
 void serial_echopair_P(const char *s_P, float v)
     { serialprintPGM(s_P); SERIAL_ECHO(v); }
 void serial_echopair_P(const char *s_P, double v)
     { serialprintPGM(s_P); SERIAL_ECHO(v); }
 void serial_echopair_P(const char *s_P, unsigned long v)
     { serialprintPGM(s_P); SERIAL_ECHO(v); }
+*/
+
+void serial_echopair_P(const char *s_P, float v)
+    { serialprintPGM(s_P); 
+      #ifdef ESPWifi
+        serialprintPGM2(s_P);
+      #endif
+      SERIAL_ECHO(v); 
+    }
+void serial_echopair_P(const char *s_P, double v)
+    { serialprintPGM(s_P); 
+      #ifdef ESPWifi
+        serialprintPGM2(s_P);
+      #endif
+      SERIAL_ECHO(v); 
+    }
+void serial_echopair_P(const char *s_P, unsigned long v)
+    { serialprintPGM(s_P); 
+      #ifdef ESPWifi
+        serialprintPGM2(s_P);
+      #endif
+      SERIAL_ECHO(v); 
+    }
 
 #ifdef SDSUPPORT
   #include "SdFatUtil.h"
@@ -664,6 +688,11 @@ void setup()
   setup_killpin();
   setup_powerhold();
   MYSERIAL.begin(BAUDRATE);
+
+  #ifdef ESPWifi
+    ESPSERIAL.begin(BAUDRATE);
+  #endif
+  
   SERIAL_PROTOCOLLNPGM("start");
   SERIAL_ECHO_START;
 
@@ -793,8 +822,52 @@ button.tick();
 
 }
 
+/* 
+ * @param cmdPort
+ * port command is being received on, used to block other port - FB
+ * -1 = not blocked
+ */
+ 
+#ifdef ESPWifi
+  int cmdPort = -1;
+#endif
+
 void get_command()
 {
+
+  /*
+  while( MYSERIAL.available() > 0  && buflen < BUFSIZE) {
+    serial_char = MYSERIAL.read();
+    if(serial_char == '\n' ||
+       serial_char == '\r' ||
+       (serial_char == ':' && comment_mode == false) ||
+       serial_count >= (MAX_CMD_SIZE - 1) )
+       {
+   */
+
+  //Set serial port based on availability
+  #ifdef ESPWifi
+  while ((MYSERIAL.available() || ESPSERIAL.available()) > 0  && buflen < BUFSIZE) {
+    if (cmdPort == -1) {
+      if (MYSERIAL.available()){
+        cmdPort = 0;
+      } else if (ESPSERIAL.available()) {
+        cmdPort = 2;
+      }
+    }
+    if (cmdPort == 0) {
+      serial_char = MYSERIAL.read();
+    }
+    if (cmdPort == 2) {
+      serial_char = ESPSERIAL.read();
+    }
+    if(serial_char == '\n' || 
+       serial_char == '\r' || 
+       (serial_char == ':' && comment_mode == false) || 
+       serial_count >= (MAX_CMD_SIZE - 1) ) 
+    {
+      cmdPort = -1;
+  #else  
   while( MYSERIAL.available() > 0  && buflen < BUFSIZE) {
     serial_char = MYSERIAL.read();
     if(serial_char == '\n' ||
@@ -802,6 +875,7 @@ void get_command()
        (serial_char == ':' && comment_mode == false) ||
        serial_count >= (MAX_CMD_SIZE - 1) )
     {
+  #endif
       if(!serial_count) { //if empty line
         comment_mode = false; //for new command
         return;
@@ -2107,13 +2181,18 @@ void process_commands()
       card.getStatus();
       break;
     case 28: //M28 - Start SD write
-      starpos = (strchr(strchr_pointer + 4,'*'));
-      if(starpos != NULL){
-        char* npos = strchr(cmdbuffer[bufindr], 'N');
-        strchr_pointer = strchr(npos,' ') + 1;
-        *(starpos) = '\0';
-      }
-      card.openFile(strchr_pointer+4,false);
+     
+     card.initsd();
+     
+     if(card.cardOK){ 
+        starpos = (strchr(strchr_pointer + 4,'*'));
+        if(starpos != NULL){
+          char* npos = strchr(cmdbuffer[bufindr], 'N');
+          strchr_pointer = strchr(npos,' ') + 1;
+          *(starpos) = '\0';
+        }        
+        card.openFile(strchr_pointer+4,false);
+      } 
       break;
     case 29: //M29 - Stop SD write
       //processed in write to file routine above
