@@ -25,7 +25,7 @@
 // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
 // build by the user have been successfully uploaded into firmware.
 #define STRING_VERSION_CONFIG_H __DATE__ "11/5/16 " __TIME__ // build date and time/
-#define STRING_CONFIG_H_AUTHOR "(Buvan_Redd,FabX_Pro_MKS_Gen)" // Who made the changes.*******************************************************
+#define STRING_CONFIG_H_AUTHOR "(FabX_Pro_MKS Gen, Buvan_Redd)" // Who made the changes.*******************************************************
 
 // SERIAL_PORT selects which serial port should be used for communication with the host.
 // This allows the connection of wireless adapters (for instance) to non-default port pins.
@@ -33,10 +33,13 @@
 #define SERIAL_PORT 0
 
 // This determines the communication speed of the printer
-#define BAUDRATE 250000
+#define BAUDRATE 115200
 
 // This enables the serial port associated to the Bluetooth interface
 //#define BTENABLED              // Enable BT interface on AT90USB devices
+
+//For interfacing with ESP IOT
+#define ESPWifi
 
 // The following define selects which electronics board you have.
 // Please choose the name from boards.h that matches your setup
@@ -558,7 +561,7 @@ const bool Z_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic o
 
 // The RepRapDiscount Smart Controller (white PCB)
 // http://reprap.org/wiki/RepRapDiscount_Smart_Controller
-#define REPRAP_DISCOUNT_SMART_CONTROLLER
+//#define REPRAP_DISCOUNT_SMART_CONTROLLER
 
 // The GADGETS3D G3D LCD/SD Controller (blue PCB)
 // http://reprap.org/wiki/RAMPS_1.3/1.4_GADGETS3D_Shield_with_Panel

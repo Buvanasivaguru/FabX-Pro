@@ -42,6 +42,7 @@
 #endif
 
 #include "MarlinSerial.h"
+#include "MarlinBTSerial.h"
 
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -52,6 +53,16 @@
 
 #include "WString.h"
 
+/*#ifdef AT90USB
+   #ifdef BTENABLED
+         #define MYSERIAL bt
+   #else
+         #define MYSERIAL Serial
+   #endif // BTENABLED
+#else
+  #define MYSERIAL MSerial
+#endif*/
+
 #ifdef AT90USB
    #ifdef BTENABLED
          #define MYSERIAL bt
@@ -60,8 +71,12 @@
    #endif // BTENABLED
 #else
   #define MYSERIAL MSerial
+  #ifdef ESPWifi
+    #define ESPSERIAL BTSerial
+  #endif
 #endif
 
+/*
 #define SERIAL_PROTOCOL(x) (MYSERIAL.print(x))
 #define SERIAL_PROTOCOL_F(x,y) (MYSERIAL.print(x,y))
 #define SERIAL_PROTOCOLPGM(x) (serialprintPGM(PSTR(x)))
@@ -101,7 +116,95 @@ FORCE_INLINE void serialprintPGM(const char *str)
     ch=pgm_read_byte(++str);
   }
 }
+*/
 
+#ifdef ESPWifi
+  #define SERIAL_PROTOCOL(x) { MYSERIAL.print(x); ESPSERIAL.print(x); };
+#else
+  #define SERIAL_PROTOCOL(x) (MYSERIAL.print(x))
+#endif
+
+#ifdef ESPWifi
+  #define SERIAL_PROTOCOL_F(x,y) { MYSERIAL.print(x,y); ESPSERIAL.print(x,y); };
+#else
+  #define SERIAL_PROTOCOL_F(x,y) (MYSERIAL.print(x,y))
+#endif
+
+#ifdef ESPWifi
+  #define SERIAL_PROTOCOLPGM(x) { serialprintPGM(PSTR(x)); serialprintPGM2(PSTR(x)); };
+#else
+  #define SERIAL_PROTOCOLPGM(x) (serialprintPGM(PSTR(x)))
+#endif
+
+#ifdef ESPWifi
+  #define SERIAL_PROTOCOLLN(x) { MYSERIAL.print(x); MYSERIAL.write('\n'); ESPSERIAL.print(x); ESPSERIAL.write('\n'); };
+#else
+  #define SERIAL_PROTOCOLLN(x) (MYSERIAL.print(x),MYSERIAL.write('\n'))
+#endif
+
+#ifdef ESPWifi
+  #define SERIAL_PROTOCOLLNPGM(x) { serialprintPGM(PSTR(x)); MYSERIAL.write('\n'); serialprintPGM2(PSTR(x)); ESPSERIAL.write('\n'); };
+#else
+  #define SERIAL_PROTOCOLLNPGM(x) (serialprintPGM(PSTR(x)),MYSERIAL.write('\n'))
+#endif
+
+
+extern const char errormagic[] PROGMEM;
+extern const char echomagic[] PROGMEM;
+
+#ifdef ESPWifi
+  #define SERIAL_ERROR_START { serialprintPGM(errormagic); serialprintPGM2(errormagic); };
+#else
+  #define SERIAL_ERROR_START (serialprintPGM(errormagic))
+#endif
+
+#define SERIAL_ERROR(x) SERIAL_PROTOCOL(x)
+#define SERIAL_ERRORPGM(x) SERIAL_PROTOCOLPGM(x)
+#define SERIAL_ERRORLN(x) SERIAL_PROTOCOLLN(x)
+#define SERIAL_ERRORLNPGM(x) SERIAL_PROTOCOLLNPGM(x)
+
+#ifdef ESPWifi
+  #define SERIAL_ECHO_START { serialprintPGM(echomagic); serialprintPGM2(echomagic); };
+#else
+  #define SERIAL_ECHO_START (serialprintPGM(echomagic))
+#endif
+
+#define SERIAL_ECHO(x) SERIAL_PROTOCOL(x)
+#define SERIAL_ECHOPGM(x) SERIAL_PROTOCOLPGM(x)
+#define SERIAL_ECHOLN(x) SERIAL_PROTOCOLLN(x)
+#define SERIAL_ECHOLNPGM(x) SERIAL_PROTOCOLLNPGM(x)
+
+#define SERIAL_ECHOPAIR(name,value) (serial_echopair_P(PSTR(name),(value)))
+
+void serial_echopair_P(const char *s_P, float v);
+void serial_echopair_P(const char *s_P, double v);
+void serial_echopair_P(const char *s_P, unsigned long v);
+
+
+//Things to write to serial from Program memory. Saves 400 to 2k of RAM.
+
+#define SerialprintPGM(x) serialprintPGM(MYPGM(x))
+FORCE_INLINE void serialprintPGM(const char *str)
+{
+  char ch=pgm_read_byte(str);
+  while(ch)
+  {
+    MYSERIAL.write(ch);
+    ch=pgm_read_byte(++str);
+  }
+}
+#ifdef ESPWifi
+#define SerialprintPGM2(x) serialprintPGM2(MYPGM(x))
+FORCE_INLINE void serialprintPGM2(const char *str)
+{
+  char ch=pgm_read_byte(str);
+  while(ch)
+  {
+    ESPSERIAL.write(ch);
+    ch=pgm_read_byte(++str);
+  }
+}
+#endif
 
 void get_command();
 void process_commands();
