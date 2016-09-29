@@ -419,15 +419,6 @@ boolean chdkActive = false;
 void get_arc_coordinates();
 bool setTargetedHotend(int code);
 
-/*
-void serial_echopair_P(const char *s_P, float v)
-    { serialprintPGM(s_P); SERIAL_ECHO(v); }
-void serial_echopair_P(const char *s_P, double v)
-    { serialprintPGM(s_P); SERIAL_ECHO(v); }
-void serial_echopair_P(const char *s_P, unsigned long v)
-    { serialprintPGM(s_P); SERIAL_ECHO(v); }
-*/
-
 void serial_echopair_P(const char *s_P, float v)
     { serialprintPGM(s_P); 
       #ifdef ESPWifi
@@ -834,16 +825,6 @@ button.tick();
 
 void get_command()
 {
-
-  /*
-  while( MYSERIAL.available() > 0  && buflen < BUFSIZE) {
-    serial_char = MYSERIAL.read();
-    if(serial_char == '\n' ||
-       serial_char == '\r' ||
-       (serial_char == ':' && comment_mode == false) ||
-       serial_count >= (MAX_CMD_SIZE - 1) )
-       {
-   */
 
   //Set serial port based on availability
   #ifdef ESPWifi
