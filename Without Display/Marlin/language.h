@@ -154,6 +154,7 @@
 #define MSG_PAUSE							" SD Printing is Paused at "
 #define MSG_RESUME							" SD Printing is Resumed at "
 #define MSG_START							"   SD Printing is Started"
+#define MSG_PREHEAT_START              " Preheating is Started"
 #define MSG_SD_CARD_CHK				   		" Kindly Insert the SD Card Properly in the SD Slot"
 #define MSG_SD_CARD_INRT				    "  Long Press the Button to stop the SD Print..."
 // LCD Menu Messages

@@ -586,94 +586,97 @@ void singleclick()
   card.initsdcard();
   if (card.cardOK){
   
-if(!card.sdprinting && !card.sdpause)
-{
-     //card.initsd();// M21 - init SD card
-     enable_endstops(true);
-     Stopped=false;
-     SERIAL_ECHO_START;       
-     SERIAL_PROTOCOLPGM(" SD Card OK  ");
-     // M20 - list SD card
-     //SERIAL_PROTOCOLLNPGM(MSG_BEGIN_FILE_LIST);
-     digitalWrite(LED_PIN,HIGH);
-     homeaxis(X_AXIS);
-     homeaxis(Y_AXIS);
-     SERIAL_ECHO_START;    
-     card.ls();
-     //sdprint=true;
-      //SERIAL_PROTOCOLLNPGM(MSG_END_FILE_LIST);
-     card.openFile(card.filename,true);
-     SERIAL_PROTOCOLPGM(MSG_SD_FILE_OPENED);
-     SERIAL_PROTOCOL(card.filename);
-     card.sdprinting=true;
-     card.sdpause=false;
-     card.sdstop=true;
-     SERIAL_PROTOCOLPGM(MSG_START); 
- }
-else if (!card.sdpause && card.sdprinting )
-  {
-  digitalWrite(LED_PIN,LOW);
-  delay(500);
-digitalWrite(LED_PIN,HIGH);
-  //finishAndDisableSteppers();
-  card.pauseSDPrint();
-/* if(current_position[Z_AXIS] < 90 )
-  {
-  current_position[Z_AXIS] = current_position[Z_AXIS] + 15;
-  lastp[E_AXIS] = current_position[E_AXIS];
-  current_position[E_AXIS] = current_position[E_AXIS] - 2;
-  //current_position[E_AXIS] = lastp[E_AXIS];
-  }*/
+    if(!card.sdprinting && !card.sdpause)
+    {
+         //card.initsd();// M21 - init SD card
+         enable_endstops(true);
+         Stopped=false;
+         SERIAL_ECHO_START;       
+         SERIAL_PROTOCOLPGM(" SD Card OK  ");
+         // M20 - list SD card
+         //SERIAL_PROTOCOLLNPGM(MSG_BEGIN_FILE_LIST);
+         digitalWrite(LED_PIN,HIGH);
+         homeaxis(X_AXIS);
+         homeaxis(Y_AXIS);
+         SERIAL_ECHO_START;    
+         card.ls();
+         //sdprint=true;
+          //SERIAL_PROTOCOLLNPGM(MSG_END_FILE_LIST);
+         card.openFile(card.filename,true);
+         SERIAL_PROTOCOLPGM(MSG_SD_FILE_OPENED);
+         SERIAL_PROTOCOL(card.filename);
+         card.sdprinting=true;
+         card.sdpause=false;
+         card.sdstop=true;
+         SERIAL_PROTOCOLPGM(MSG_START); 
+     }
+    else if (!card.sdpause && card.sdprinting )
+      {
+      digitalWrite(LED_PIN,LOW);
+      delay(500);
+    digitalWrite(LED_PIN,HIGH);
+      //finishAndDisableSteppers();
+      card.pauseSDPrint();
+    /* if(current_position[Z_AXIS] < 90 )
+      {
+      current_position[Z_AXIS] = current_position[Z_AXIS] + 15;
+      lastp[E_AXIS] = current_position[E_AXIS];
+      current_position[E_AXIS] = current_position[E_AXIS] - 2;
+      //current_position[E_AXIS] = lastp[E_AXIS];
+      }*/
+      }
+    else if (!card.sdprinting && card.sdpause)
+     {
+      digitalWrite(LED_PIN,LOW);
+      delay(500);
+    digitalWrite(LED_PIN, HIGH);
+      //finishAndDisableSteppers();
+      card.resumeSDPrint();
+    /*  if(current_position[Z_AXIS] < 90 )
+     {
+      current_position[Z_AXIS] = current_position[Z_AXIS] - 15;
+      lastp[E_AXIS] = current_position[E_AXIS];
+     // current_position[E_AXIS]- = FILAMENTCHANGE_FIRSTRETRACT;
+      //current_position[E_AXIS] = lastp[E_AXIS];
+     }*/  
+      } 
   }
-else if (!card.sdprinting && card.sdpause)
- {
-  digitalWrite(LED_PIN,LOW);
-  delay(500);
-digitalWrite(LED_PIN, HIGH);
-  //finishAndDisableSteppers();
-  card.resumeSDPrint();
-/*  if(current_position[Z_AXIS] < 90 )
- {
-  current_position[Z_AXIS] = current_position[Z_AXIS] - 15;
-  lastp[E_AXIS] = current_position[E_AXIS];
- // current_position[E_AXIS]- = FILAMENTCHANGE_FIRSTRETRACT;
-  //current_position[E_AXIS] = lastp[E_AXIS];
- }*/  
-  } 
+  else
+  {
+    SERIAL_ECHO_START;       
+    SERIAL_ECHOLN(MSG_SD_CARD_CHK);
+    for(int fadeValue = 255 ; fadeValue >= 0; fadeValue -=5) { 
+       // sets the value (range from 0 to 255):
+       analogWrite(LED_PIN, fadeValue);         
+       // wait for 30 milliseconds to see the dimming effect    
+       delay(5);                            
+    }
+    //Incase of no SD card, the EXTRUDER amd BED is set to preheat.
+    SERIAL_ECHO_START;       
+    SERIAL_ECHOLN(MSG_PREHEAT_START);
+    setTargetHotend(ABS_PREHEAT_HOTEND_TEMP, 0);  //Setting Extruder1 to 240˚C
+    setTargetBed(PLA_PREHEAT_HPB_TEMP);         //Setting Bed to 70˚C
+    
+  }
 }
-else
-{
-  SERIAL_ECHO_START;       
-  SERIAL_PROTOCOLPGM(MSG_SD_CARD_CHK);
-  //card.initsdcard();
-   for(int fadeValue = 255 ; fadeValue >= 0; fadeValue -=5) 
-  { 
-    // sets the value (range from 0 to 255):
-    analogWrite(LED_PIN, fadeValue);         
-    // wait for 30 milliseconds to see the dimming effect    
-    delay(5);                            
-}
-}
-}
+
 void sddetectbuvan()
 {
-  if(IS_SD_INSERTED)
-        {
-            card.initsd();
-            LCD_MESSAGEPGM(MSG_SD_INSERTED);
-			digitalWrite(LED_PIN,HIGH);
-			delay(200);
-			digitalWrite(LED_PIN,LOW);
-        }
-        else
-        {
-            card.release();
-            LCD_MESSAGEPGM(MSG_SD_REMOVED);
-                        digitalWrite(LED_PIN,HIGH);
-			delay(200);
-			digitalWrite(LED_PIN,LOW);
-        }
+  if(IS_SD_INSERTED){
+    card.initsd();
+    LCD_MESSAGEPGM(MSG_SD_INSERTED);
+		digitalWrite(LED_PIN,HIGH);
+		delay(200);
+		digitalWrite(LED_PIN,LOW);
+  }else{
+    card.release();
+    LCD_MESSAGEPGM(MSG_SD_REMOVED);
+    digitalWrite(LED_PIN,HIGH);
+	  delay(200);
+		digitalWrite(LED_PIN,LOW);
+  }
 }
+
 void setup()
 {
   setup_killpin();
@@ -757,12 +760,7 @@ button.attachPress(longpress);
 
 void loop()
 {
-// sddetectbuvan();
- /*if(card.cardOK)
- digitalWrite(LED_PIN,HIGH);
- */
- // digitalWrite(LED_PIN,HIGH); //testing
-   if(buflen < (BUFSIZE-1))
+  if(buflen < (BUFSIZE-1))
     get_command();
   #ifdef SDSUPPORT
   card.checkautostart(false);
@@ -806,10 +804,7 @@ void loop()
   checkHitEndstops();
   lcd_update();
 
-//Fab-X LED
-
-//led.blink(2000);//on a second, off a second
-button.tick();
+  button.tick();
 
 }
 
